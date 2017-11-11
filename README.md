@@ -1,61 +1,60 @@
 
 # Mir
 
-## 概要
+## Description
+Mir is lightweight graphics library which has simple API.
+Mir depends on cl-opengl and draws with OpenGL.
 
-Mirは軽量でシンプルなグラフィックスライブラリです。  
-cl-openglを使用しており、描画にOpenGLを用いています。
+We works for the following cases.
 
-* OpenGLの知識はないけどグラフィックスを利用したプログラムを作ってみたい  
-* 複雑なことはしないからとにかく簡単に絵をだしたい
+- Making a software used Graphics API without the knowledge of OpenGL
+- Drawing pictures quickly
 
-といった場合に手軽に利用できることを目指しています。
+* Curreyntly, Mir supports the API for 2D.
 
-※現在は2Dのみ対応しています。
+[Demonstration is here(mir-sample](https://github.com/singy15/mir-sample)
 
-[機能デモはこちら（mir-sample）](https://github.com/singy15/mir-sample)
+## Features
 
-## 主な機能
+* Drawing basicaly figures
+* Reading/Writing RAW pictures
+* Writing strings
+* Interactions with keyboard and  mouse
 
-* 基本的な図形描画機能
-* RAW画像の読込・描画機能
-* 文字列描画機能
-* キーボード・マウスの入力検出
+## Dependencies
 
-## 依存関係
-
-Mirは以下のライブラリに依存しています。
+Mir depends these librarie.
 
 * cl-opengl
 * cl-glu
 * cl-glut
 
-## インストール方法
+## Installation
 
-MirはQuickLispとASDFから読み込むことができます、現時点ではMirはQuickLispのリポジトリに登録されて**いません**。  
-リポジトリをcloneして利用してください。
+You can use the Mir from Quicklisp and ASDF. Currently Mir *hasn't* been indexed yet.
+To use the Mir, Clone this repository.
 
 ```
-; QuickLispを使用して読み込み (local-projects)
+; Reading with QuickLisp(local-projects)
 (ql:quickload :mir)
 ```
 
 ```
-; ASDFを使用して読み込み
+; Reading with ASDF
 (asdf:load-system :mir)
 ```
 
 ```
-; asdファイルの依存関係に追加
+; Add the Mir into dependencies of .asd file.
 (defsystem mir-sample
   :depends-on (:cl-opengl :cl-glut :cl-glu :mir)
   ...
 ```
 
-Mirは1ファイルで構成されているのでasdファイルのcomponentsに追加するだけでも動作します。
+You can use the Mir with adding the path into the components of your `.asd` file because Mir built on single file
 
 ```
-; asdファイルのコンポーネントに追加
+; Add path into the components of your `.asd` file
 (defsystem mir-sample
   :depends-on (:cl-opengl :cl-glut :cl-glu)
   :components (
@@ -66,9 +65,9 @@ Mirは1ファイルで構成されているのでasdファイルのcomponentsに
 
 ```
 
-## 使用方法
+## Usage
 
-簡単なサンプル。
+It's trivial sample.
 
 ```
 (ql:quickload :mir)
