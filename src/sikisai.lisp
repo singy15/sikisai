@@ -1,6 +1,6 @@
 
-;; Package mir.
-(defpackage mir
+;; Package sik.
+(defpackage sik
   (:use :cl :cl-user)
   (:export
     :+bitmap-8-by-13+
@@ -40,7 +40,7 @@
     :image
     :textb
     :texts))
-(in-package :mir)
+(in-package :sik)
 
 ;; Constances.
 (defvar +bitmap-8-by-13+ glut:+bitmap-8-by-13+)
@@ -136,7 +136,7 @@
 		 :accessor double-buffer-enabled
 		 :initform nil))
 	(:default-initargs 
-    :title "mir"
+    :title "sikisai"
     :mode '(:double :rgb :depth)
     :width 400
     :height 400))
@@ -390,7 +390,7 @@
   (let* ((n n-div)
          (ptheta (/ (* 2.0 PI) n)))
      (loop for i from 0 below n do
-           (mir:line (+ x (* radius (cos (* i ptheta))))
+           (sik:line (+ x (* radius (cos (* i ptheta))))
                      (+ y (* radius (sin (* i ptheta))))
                      (+ x (* radius (cos (* (+ i 1) ptheta))))
                      (+ y (* radius (sin (* (+ i 1) ptheta))))

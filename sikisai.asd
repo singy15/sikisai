@@ -1,13 +1,13 @@
 
 (in-package :cl-user)
-(defpackage mir-asd
+(defpackage sikisai-asd
   (:use :cl :asdf))
-(in-package :mir-asd)
+(in-package :sikisai-asd)
 
-(defsystem mir
+(defsystem sikisai
   :depends-on (:cl-opengl :cl-glut :cl-glu)
   :components (
     (:module "src"
       :components (
-        (:file "mir")))))
+        (:file "sikisai")))))
 
