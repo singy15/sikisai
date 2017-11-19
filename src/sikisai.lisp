@@ -303,8 +303,10 @@
 ;; Reshape.
 (defmethod glut:reshape ((this window) width height)
   (gl:viewport 0 0 width height)
+  (gl:matrix-mode :projection)
   (gl:load-identity)
-  (glu:ortho-2d 0.0 width height 0.0))
+  (glu:ortho-2d 0.0 width height 0.0)
+  (gl:matrix-mode :modelview))
 
 ;; Draw.
 (defmethod glut:display ((this window))
@@ -425,30 +427,36 @@
   (unset-draw-param w r g b a aa))
 
 ;; Draw image.
-(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0))
+(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0) (rt 0.0) (r 1.0) (g 1.0) (b 1.0))
   (gl:push-matrix)
-  (gl:pixel-store :unpack-alignment 1)
+  (gl:load-identity)
+  (gl:translate x y 0.0)
+  (gl:rotate (* (/ (mod rt (* 2.0 PI)) (* 2.0 PI)) 360.0) 0.0 0.0 1.0)
+  (gl:scale sx sy 0.0)
+  
   (gl:bind-texture :texture-2d (id texture))
-  (gl:raster-pos 0 0)
   (gl:enable :texture-2d)
   (when a 
     (gl:enable :blend)
     (gl:blend-func :src-alpha :one-minus-src-alpha))
-  (gl:color 1.0 1.0 1.0 (if a a 1.0))
-  (let ((hw (/ (* sx (width texture)) 2.0))
-        (hh (/ (* sy (height texture)) 2.0))) 
+  (gl:color r g b (if a a 1.0))
+  
+  (let ((hw (/ (width texture) 2.0))
+        (hh (/ (height texture) 2.0))) 
     (gl:with-primitive :quads
     (gl:tex-coord 0 0)
-    (gl:vertex (- x hw) (- y hh) 0)
+    (gl:vertex (- hw) (- hh) 0)
     (gl:tex-coord 1 0)
-    (gl:vertex (+ x hw) (- y hh) 0)
+    (gl:vertex (+ hw) (- hh) 0)
     (gl:tex-coord 1 1)
-    (gl:vertex (+ x hw) (+ y hh) 0)
+    (gl:vertex (+ hw) (+ hh) 0)
     (gl:tex-coord 0 1)
-    (gl:vertex (- x hw) (+ y hh) 0)))
+    (gl:vertex (- hw) (+ hh) 0)))  
+  
   (when a
     (gl:disable :blend))
   (gl:disable :texture-2d)
+  
   (gl:pop-matrix))
 
 ;; Draw string with bitmap character.
