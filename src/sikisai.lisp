@@ -72,15 +72,15 @@
      :initarg :id)))
 
 ;; Ctor texture.
-(defmethod initialize-instance :around ((this texture) &key path width height)
+(defmethod initialize-instance :around ((this texture) &key path width height (interpolation :linear))
   (call-next-method)
   (gl:pixel-store :unpack-alignment 1)
   (let ((id (car (gl:gen-textures 1)))
         (raw-pnt (load-raw path width height)))
     (setf (id this) id)
     (gl:bind-texture :texture-2d id)
-    (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
-    (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)
+    (gl:tex-parameter :texture-2d :texture-min-filter interpolation)
+    (gl:tex-parameter :texture-2d :texture-mag-filter interpolation)
     (gl:tex-image-2d :texture-2d 0 :rgba (float width) (float height) 0 :rgba :unsigned-byte raw-pnt)
     (setf (raw-pnt this) raw-pnt)
     (setf (width this) (float width))
