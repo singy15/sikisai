@@ -435,7 +435,8 @@
 (defun textb (str x y &key (r 1.0) (g 1.0) (b 1.0) (a nil) (font +bitmap-8-by-13+))
   (set-draw-param nil r g b a nil)
   (gl:raster-pos x y)
-  (glut:bitmap-string font str)
+  (loop for i from 0 below (length str) do
+        (glut:bitmap-character font (char-code (aref str i))))
   (unset-draw-param nil r g b a nil))
 
 ;; Draw string with stroke character.
@@ -447,7 +448,8 @@
     (gl:scale (* s 0.1) (* s -0.1) 0.0)
     (gl:scale sx sy 1.0)
     (gl:rotate rt 0.0 0.0 -1.0)
-    (glut:stroke-string font str)
+    (loop for i from 0 below (length str) do
+          (glut:stroke-character font (char-code (aref str i))))
     (unset-draw-param w r g b a aa)
     (gl:pop-matrix)))
 
