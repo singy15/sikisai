@@ -12,18 +12,18 @@
     :+bitmap-helvetica-18+
     :+stroke-roman+
     :+stroke-mono-roman+
-		:texture
-		:width
-		:height
-		:id
-		:window
+    :texture
+    :width
+    :height
+    :id
+    :window
     :user-initialize
     :user-idle
     :user-display
     :user-finalize
-		:current
-		:get-width
-		:get-height
+    :current
+    :get-width
+    :get-height
     :get-key-down
     :get-key-push
     :get-mouse-down
@@ -64,36 +64,36 @@
    (height
      :accessor height
      :initarg :height)
-	 (raw
-		 :accessor raw
-		 :initarg :raw)
+   (raw
+     :accessor raw
+     :initarg :raw)
    (id
      :accessor id
      :initarg :id)))
 
 ;; Ctor texture.
 (defmethod initialize-instance :around ((this texture) &key path width height)
-	(call-next-method)
+  (call-next-method)
   (gl:pixel-store :unpack-alignment 1)
-	(let ((id (car (gl:gen-textures 1))))
-		(setf (id this) id)
-		(gl:bind-texture :texture-2d id)
-		(gl:tex-parameter :texture-2d :texture-min-filter :nearest)
-		(gl:tex-parameter :texture-2d :texture-mag-filter :nearest)
-		(gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (load-raw path width height))
-		this))
+  (let ((id (car (gl:gen-textures 1))))
+    (setf (id this) id)
+    (gl:bind-texture :texture-2d id)
+    (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
+    (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)
+    (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (load-raw path width height))
+    this))
 
 ;; window class.
 (defclass window (glut:window) 
   ((tm-frame 
-		 :accessor tm-frame
-		 :initform 0)
-	 (tm-next-frame
-		 :accessor tm-next-frame
-		 :initform 0)
-	 (fps
-		 :accessor fps
-		 :initform 60
+     :accessor tm-frame
+     :initform 0)
+   (tm-next-frame
+     :accessor tm-next-frame
+     :initform 0)
+   (fps
+     :accessor fps
+     :initform 60
      :initarg :fps)
    (keys
      :accessor keys
@@ -132,10 +132,10 @@
    (mouse-right-push-old
      :accessor mouse-right-push-old
      :initform nil)
-	 (double-buffer-enabled
-		 :accessor double-buffer-enabled
-		 :initform nil))
-	(:default-initargs 
+   (double-buffer-enabled
+     :accessor double-buffer-enabled
+     :initform nil))
+  (:default-initargs 
     :title "sikisai"
     :mode '(:double :rgb :depth)
     :width 400
@@ -143,10 +143,10 @@
 
 ;; Ctor window.
 (defmethod initialize-instance :around ((this window) &key mode)
-	(call-next-method)
-	(setf (double-buffer-enabled this) (member :double mode))
-	(setf *window* this)
-	this)
+  (call-next-method)
+  (setf (double-buffer-enabled this) (member :double mode))
+  (setf *window* this)
+  this)
 
 ;; User functions.
 (defmethod user-initialize ((this window)) nil)
@@ -156,15 +156,15 @@
 
 ;; Get current window.
 (defun current ()
-	*window*)
+  *window*)
 
 ;; Get current window width.
 (defun get-width ()
-	(glut:width *window*))
+  (glut:width *window*))
 
 ;; Get current window height.
 (defun get-height ()
-	(glut:height *window*))
+  (glut:height *window*))
 
 ;; Load RAW image.
 (defun load-raw (path width height)
@@ -309,8 +309,8 @@
   (set-key-push-state this)
   (fps-control this #'user-display)
   (if (double-buffer-enabled this) 
-		(glut:swap-buffers)
-		(gl:flush)))
+    (glut:swap-buffers)
+    (gl:flush)))
 
 ;; Idle.
 (defmethod glut:idle ((this window))
