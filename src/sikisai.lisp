@@ -405,13 +405,13 @@
   (let* ((n n-div)
          (ptheta (/ (* 2.0 PI) n)))
      (if f
-			 (let ((pnts (list)))
-				 (loop for i from 0 below n do
-							 (push (list (+ x (* radius (cos (* i ptheta))))
-													 (+ y (* radius (sin (* i ptheta)))))
-										 pnts))
-				 (sik:poly pnts :w w :r r :g g :b b :a a :aa aa))
-			 (loop for i from 0 below n do
+       (let ((pnts (list)))
+         (loop for i from 0 below n do
+               (push (list (+ x (* radius (cos (* i ptheta))))
+                           (+ y (* radius (sin (* i ptheta)))))
+                     pnts))
+         (sik:poly pnts :w w :r r :g g :b b :a a :aa aa))
+       (loop for i from 0 below n do
            (sik:line (+ x (* radius (cos (* i ptheta))))
                      (+ y (* radius (sin (* i ptheta))))
                      (+ x (* radius (cos (* (+ i 1) ptheta))))
