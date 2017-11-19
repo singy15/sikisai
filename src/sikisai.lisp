@@ -399,15 +399,22 @@
   (unset-draw-param w r g b a aa))
 
 ;; Draw circle.
-(defun circle (x y radius n-div &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun circle (x y radius n-div &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (f nil))
   (let* ((n n-div)
          (ptheta (/ (* 2.0 PI) n)))
-     (loop for i from 0 below n do
+     (if f
+			 (let ((pnts (list)))
+				 (loop for i from 0 below n do
+							 (push (list (+ x (* radius (cos (* i ptheta))))
+													 (+ y (* radius (sin (* i ptheta)))))
+										 pnts))
+				 (sik:poly pnts :w w :r r :g g :b b :a a :aa aa))
+			 (loop for i from 0 below n do
            (sik:line (+ x (* radius (cos (* i ptheta))))
                      (+ y (* radius (sin (* i ptheta))))
                      (+ x (* radius (cos (* (+ i 1) ptheta))))
                      (+ y (* radius (sin (* (+ i 1) ptheta))))
-                     :w w :aa aa :r r :g g :b b :a a))))
+                     :w w :aa aa :r r :g g :b b :a a)))))
 
 ;; Draw polygon.
 (defun poly (pnts &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
