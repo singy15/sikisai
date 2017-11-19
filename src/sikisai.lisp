@@ -55,6 +55,7 @@
 
 ;; Variables.
 (defparameter *window* nil)
+(defparameter *raw-buffers* (list))
 
 ;; texture class.
 (defclass texture () 
@@ -64,9 +65,8 @@
    (height
      :accessor height
      :initarg :height)
-   (raw
-     :accessor raw
-     :initarg :raw)
+   (raw-pnt
+     :accessor raw-pnt)
    (id
      :accessor id
      :initarg :id)))
@@ -75,12 +75,17 @@
 (defmethod initialize-instance :around ((this texture) &key path width height)
   (call-next-method)
   (gl:pixel-store :unpack-alignment 1)
-  (let ((id (car (gl:gen-textures 1))))
+  (let ((id (car (gl:gen-textures 1)))
+        (raw-pnt (load-raw path width height)))
     (setf (id this) id)
     (gl:bind-texture :texture-2d id)
     (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
     (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)
-    (gl:tex-image-2d :texture-2d 0 :rgba width height 0 :rgba :unsigned-byte (load-raw path width height))
+    (gl:tex-image-2d :texture-2d 0 :rgba (float width) (float height) 0 :rgba :unsigned-byte raw-pnt)
+    (setf (raw-pnt this) raw-pnt)
+    (setf (width this) (float width))
+    (setf (height this) (float height))
+    (push this *raw-buffers*)
     this))
 
 ;; window class.
@@ -317,9 +322,17 @@
   (user-idle this)
   (glut:post-redisplay))
 
+;; Free RAW image buffer.
+(defun free-raw-buffer ()
+  (mapc (lambda (p)
+          (cffi:foreign-free (raw-pnt p)))
+        *raw-buffers*)
+  (setf *raw-buffers* (list)))
+
 ;; Close.
 (defmethod glut:close ((this window))
-  (user-finalize this))
+  (user-finalize this)
+  (free-raw-buffer))
 
 ;; Start main loop.
 (defmethod display-window ((this window))
