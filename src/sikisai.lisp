@@ -81,6 +81,8 @@
     :teapot3
     :poly3
     :texts3
+    :load-dxf
+    :model3
 
     ;; Imported symbols.
     :look-at
@@ -526,7 +528,7 @@
   (if w
     (gl:line-width w)
     (gl:line-width 1.0))
-  (gl:material :front-and-back :ambient-and-diffuse (vector r g b (if a a 1.0)))
+  (gl:material :front-and-back :diffuse (vector r g b (if a a 1.0)))
   (gl:color r g b (if a a 1.0)))
 
 ;; Clear draw parameter.
@@ -692,13 +694,6 @@
       (unset-draw-param w r g b a aa)
       (gl:pop-matrix))))
 
-(defun basic-manip (x y z sx sy sz rx ry rz)
-  (gl:translate x y z)
-  (gl:rotate rx 1.0 0.0 0.0)
-  (gl:rotate ry 0.0 1.0 0.0)
-  (gl:rotate rz 0.0 0.0 1.0)
-  (gl:scale sx sy sz))
-
 ;; Draw point.
 (defun point3 (x y z &key (s 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
   (set-draw-param nil r g b a aa)
@@ -811,6 +806,196 @@
   (if (double-buffer-enabled this) 
     (glut:swap-buffers)
     (gl:flush)))
+
+(defclass dxfline () 
+  ((code
+     :accessor code)
+   (typ
+     :accessor typ)
+   (data
+     :accessor data)))
+
+(defparameter *vertex* nil)
+(defparameter *vread* nil)
+(defparameter *drawmode* nil)
+
+(defun dxf-clear ()
+  (setf *vertex* (make-array '(4 4) :initial-element 0.0))
+  (setf *vread* (make-array '(4 4) :initial-element nil))
+  (setf *drawmode* :face))
+
+(defun dxf-get-type (code)
+  (cond ((equal code 999) :type-com)
+        ((and (<= 0 code) (>= 9 code)) :type-str)
+        ((and (<= 60 code) (>= 79 code)) :type-int)
+        ((or (and (<= 10 code) (<= code 59)) (and (<= 210 code) (<= code 239))) :type-flt)
+        (t :type-err)))
+
+(defun trim (str)
+  (string-trim '(#\Space #\Return #\Newline) str))
+
+(defun dxf-read-line (dr fp)
+  (let (str)
+    ;; Read code.
+    (unless (setf str (read-line fp nil)) (return-from dxf-read-line nil))
+    (setf (code dr) (parse-integer str))
+    
+    ;; Read data.
+    (setf (typ dr) (dxf-get-type (code dr)))
+    (unless (setf str (read-line fp nil)) (return-from dxf-read-line nil))
+    (cond
+      ((equal :type-str (typ dr))
+       (progn
+         (setf (data dr) (trim str))
+         (when (equal "EOF" (data dr)) (return-from dxf-read-line nil))))
+
+      ((equal :type-com (typ dr))
+       (progn))
+
+      ((equal :type-int (typ dr))
+       (setf (data dr) (parse-integer (trim str))))
+
+      ((equal :type-flt (typ dr))
+       (setf (data dr) (read-from-string (trim str))))
+      
+      (t 
+        (error "dxf-read-line : unknown type")))
+    (return-from dxf-read-line t)))
+
+(defun dxf-read-table (fp)
+  (let ((dr (make-instance 'dxfline))
+        (iflayer 0))
+    (loop while (dxf-read-line dr fp) do
+          (progn
+            (when (equal :type-str (typ dr))
+              (if (equal "ENDTAB" (data dr)) (return-from dxf-read-table t))
+              (if (equal "LAYER" (data dr))
+                  (setf iflayer 1)
+                  (if (and (equal 2 (code dr)) (equal iflayer 1))
+                    (progn))))
+            (setf iflayer 0)))))
+
+(defun dxf-vertex (n v)
+  (cond ((equal n 2) (gl:vertex (aref v 0) (aref v 1)))
+        ((equal n 3) (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
+        ((equal n 4) (gl:vertex (aref v 0) (aref v 1) (aref v 2) (aref v 3)))))
+
+;; WARN : Only triangular faces are supported.
+(defun dxf-draw ()
+  (if (equal :face *drawmode*)
+    (gl:begin :polygon)
+    (gl:begin :lines))
+  
+  ;; Set normal.
+  (let (ls (list)) 
+    (loop for i from 0 below 4 do
+          (let ((codnum 0))
+             (loop for j from 0 below 4 do
+                   (if (aref *vread* i j) 
+                       (incf codnum)))
+             (if (equal codnum 3) 
+               (setf ls (append ls (list (list (aref *vertex* i 0) 
+                                               (aref *vertex* i 1) 
+                                               (aref *vertex* i 2))))))))
+    (if (>= (length ls) 3)
+      ; (let ((nx 0.0)
+      ;       (ny 0.0)
+      ;       (nz 0.0))
+      ;   (loop for i from 0 below (- (length ls) 2) do
+      ;         (multiple-value-bind (x y z) (norm (nth i ls) (nth (+ i 1) ls) (nth (+ i 2) ls))
+      ;           (incf nx x)
+      ;           (incf ny y)
+      ;           (incf nz z)))
+      ;   (gl:normal nx ny nz))
+
+      (multiple-value-bind (x y z) (norm (car ls) (cadr ls) (caddr ls))
+        (let ((nrm (sqrt (+ (* x x) (* y y) (* z z)))))
+          (gl:normal (/ x nrm) (/ y nrm) (/ z nrm))))))
+  
+  ;; Draw face.
+  (loop for i from 0 below 4 do
+        (let ((codnum 0))
+             (loop for j from 0 below 4 do
+                   (if (aref *vread* i j) 
+                       (incf codnum)))
+             (dxf-vertex codnum (vector (aref *vertex* i 0)
+                                        (aref *vertex* i 1)
+                                        (aref *vertex* i 2)
+                                        (aref *vertex* i 3)))))
+  (gl:end)
+
+  ;; double face
+  ; (if (equal :face *drawmode*)
+  ;   (gl:begin :polygon)
+  ;   (gl:begin :lines))
+  ; (loop for i from 3 downto 0 do
+  ;       (let ((codnum 0))
+  ;            (loop for j from 0 below 4 do
+  ;                  (if (aref *vread* i j) 
+  ;                      (incf codnum)))
+  ;            (dxf-vertex codnum (vector (aref *vertex* i 0)
+  ;                                       (aref *vertex* i 1)
+  ;                                       (aref *vertex* i 2)
+  ;                                       (aref *vertex* i 3)))))
+  ; (gl:end)
+
+  (dxf-clear))
+
+(defun dxf-read-entities (fp)
+  (let ((dr (make-instance 'dxfline))
+        v
+        c)
+    (loop while (dxf-read-line dr fp) do
+          (if (equal :type-str (typ dr))
+            (progn
+              (dxf-draw)
+              (cond ((equal 0 (code dr)) 
+                     (cond ((equal "ENDSEC" (data dr)) (return-from dxf-read-entities t))
+                           ((equal "3DFACE" (data dr)) (setf *drawmode* :face))
+                           ((equal "3DLINE" (data dr)) (setf *drawmode* :line))))))
+            (progn
+              (setf c (- (floor (/ (code dr) 10)) 1))
+              (setf v (mod (code dr) 10))
+              (when (and (<= 0 v) (< v 4) (<= 0 c) (< c 3))
+                (if (aref *vread* v c)
+                  (dxf-draw))
+                (setf (aref *vertex* v c) (data dr))
+                (setf (aref *vread* v c) t)))))
+    t))
+
+(defun dxf-read-section (fp)
+  (let ((dr (make-instance 'dxfline)))
+    (loop while (dxf-read-line dr fp) do
+          (if (and (equal :type-str (typ dr)) (equal "SECTION" (data dr)))
+            (return)))
+    (loop while (dxf-read-line dr fp) do
+          (if (equal :type-str (typ dr))
+            (cond ((equal "ENDSEC" (data dr)) 
+                   (return-from dxf-read-section t))
+                  ((equal "TABLE" (data dr)) 
+                   (return-from dxf-read-section (dxf-read-table fp)))
+                  ((equal "ENTITIES" (data dr)) 
+                   (return-from dxf-read-section (dxf-read-entities fp))))))))
+
+(defun dxf-read-file (fp)
+  (let ((ls (gl:gen-lists 1))) 
+    (dxf-clear)
+    (gl:new-list ls :compile)
+    (loop while (dxf-read-section fp))
+    (gl:end-list)
+    ls)) 
+
+(defun load-dxf (path) 
+  (with-open-file (fp path :direction :input) 
+    (dxf-read-file fp)))
+
+(defun model3 (ls &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+  (render-3d
+    (set-draw-param w r g b a aa)
+    (sik:enable :cull-face)
+    (gl:call-list ls)
+    (gl:disable :cull-face)
+    (unset-draw-param w r g b a aa)))
 
 (in-package :cl-user)
 
