@@ -59,7 +59,7 @@
     :get-mouse-y
     :display-window
     :to-rad
-    :to-det
+    :to-deg
     :cross
     :norm
     :set-camera
