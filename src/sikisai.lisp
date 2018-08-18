@@ -2,32 +2,35 @@
 ;; Package sik.
 (defpackage sik
   (:use :cl :cl-user)
-  (:import-from gl 
-                translate
-                rotate
-                scale
-                load-identity
-                push-matrix
-                pop-matrix
-                matrix-mode
-                shade-model
-                light
-                material
-                enable
-                disable)
-  (:import-from glu
-                look-at)
-  (:import-from glut
-                solid-cube
-                solid-sphere
-                solid-torus
-                solid-cone
-                solid-teapot
-                wire-cube
-                wire-sphere
-                wire-torus
-                wire-cone
-                wire-teapot)
+  (:import-from 
+    gl 
+    translate
+    rotate
+    scale
+    load-identity
+    push-matrix
+    pop-matrix
+    matrix-mode
+    shade-model
+    light
+    material
+    enable
+    disable)
+  (:import-from 
+    glu
+    look-at)
+  (:import-from 
+    glut
+    solid-cube
+    solid-sphere
+    solid-torus
+    solid-cone
+    solid-teapot
+    wire-cube
+    wire-sphere
+    wire-torus
+    wire-cone
+    wire-teapot)
   (:export
     :+bitmap-8-by-13+
     :+bitmap-9-by-15+
@@ -48,6 +51,7 @@
     :user-idle
     :user-display
     :user-finalize
+    :user-mouse-wheel
     :current
     :get-width
     :get-height
@@ -83,6 +87,7 @@
     :texts3
     :load-dxf
     :model3
+    :image3
 
     ;; Imported symbols.
     :look-at
@@ -280,6 +285,7 @@
 (defmethod user-idle ((this window)) nil)
 (defmethod user-display ((this window)) nil)
 (defmethod user-finalize ((this window)) nil)
+(defmethod user-mouse-wheel ((this window) direction) nil)
 
 ;; Get current window.
 (defun current ()
@@ -389,6 +395,10 @@
   (setf (mouse-left-push this) (and (equal button :LEFT-BUTTON) (equal state :DOWN)))
   (setf (mouse-right-down this) (and (equal button :RIGHT-BUTTON) (equal state :DOWN)))
   (setf (mouse-right-push this) (and (equal button :RIGHT-BUTTON) (equal state :DOWN))))
+
+;; Mouse wheel.
+(defmethod glut:mouse-wheel ((this window) wheel-number direction x y)
+  (user-mouse-wheel this direction))
 
 ;; Mouse passive motion.
 (defmethod glut:passive-motion ((this window) x y)
@@ -996,6 +1006,52 @@
     (gl:call-list ls)
     (gl:disable :cull-face)
     (unset-draw-param w r g b a aa)))
+
+;; Draw image.
+(defun image3 (texture &key (a nil) (r 1.0) (g 1.0) (b 1.0) (at nil))
+  (render-3d
+    (sik:local
+      (sik:disable :lighting)
+
+      (when at
+        (sik:enable :alpha-test)
+        (gl:alpha-func :greater at))
+      
+      ; Alternative for alpha test.
+      ; (gl:depth-mask nil)
+      
+      (gl:bind-texture :texture-2d (id texture))
+      (gl:enable :texture-2d)
+      (when a 
+        (gl:enable :blend)
+        (gl:blend-func :src-alpha :one-minus-src-alpha))
+      (gl:color r g b (if a a 1.0))
+      
+      (let ((hw (/ (width texture) 2.0))
+            (hh (/ (height texture) 2.0))) 
+        (gl:with-primitive :quads
+        (gl:tex-coord 0 0)
+        (gl:vertex (- hw) (+ hh) 0)
+        (gl:tex-coord 1 0)
+        (gl:vertex (+ hw) (+ hh) 0)
+        (gl:tex-coord 1 1)
+        (gl:vertex (+ hw) (- hh) 0)
+        (gl:tex-coord 0 1)
+        (gl:vertex (- hw) (- hh) 0)))  
+      
+      (when a
+        (gl:disable :blend))
+      (gl:disable :texture-2d)
+
+      (when at
+        (sik:disable :alpha-test))
+
+      ; Alternative for alpha test.
+      ; (gl:depth-mask t)
+
+      (sik:enable :lighting)
+      )
+    ))
 
 (in-package :cl-user)
 
