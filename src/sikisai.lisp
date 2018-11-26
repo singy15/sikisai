@@ -397,8 +397,9 @@
   (setf (mouse-right-push this) (and (equal button :RIGHT-BUTTON) (equal state :DOWN))))
 
 ;; Mouse wheel.
-(defmethod glut:mouse-wheel ((this window) wheel-number direction x y)
-  (user-mouse-wheel this direction))
+(if (fboundp 'glut:mouse-wheel-func)
+	(defmethod glut:mouse-wheel ((this window) wheel-number direction x y)
+		(user-mouse-wheel this direction)))
 
 ;; Mouse passive motion.
 (defmethod glut:passive-motion ((this window) x y)
