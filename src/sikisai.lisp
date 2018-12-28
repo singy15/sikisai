@@ -42,6 +42,7 @@
     :+stroke-roman+
     :+stroke-mono-roman+
     :local
+    :raw
     :texture
     :width
     :height
@@ -55,6 +56,7 @@
     :current
     :get-width
     :get-height
+    :load-raw
     :get-key-down
     :get-key-push
     :get-mouse-down
@@ -157,6 +159,19 @@
      ,@body
      (gl:pop-matrix)))
 
+; raw class.
+(defclass raw () 
+  ((width
+     :accessor width
+     :initarg :width)
+   (height
+     :accessor height
+     :initarg :height)
+   (bytes
+     :accessor bytes
+     :initarg :bytes
+     :initform nil)))
+
 ;; texture class.
 (defclass texture () 
   ((width
@@ -172,19 +187,19 @@
      :initarg :id)))
 
 ;; Ctor texture.
-(defmethod initialize-instance :around ((this texture) &key path width height (intrpl :linear))
+(defmethod initialize-instance :around ((this texture) &key (path nil) (width nil) (height nil) (intrpl :linear) (src nil))
   (call-next-method)
   (gl:pixel-store :unpack-alignment 1)
-  (let ((id (car (gl:gen-textures 1)))
-        (raw-pnt (load-raw path width height)))
+  (let* ((id (car (gl:gen-textures 1)))
+         (raw (if src src (load-raw path width height))))
     (setf (id this) id)
     (gl:bind-texture :texture-2d id)
     (gl:tex-parameter :texture-2d :texture-min-filter intrpl)
     (gl:tex-parameter :texture-2d :texture-mag-filter intrpl)
-    (gl:tex-image-2d :texture-2d 0 :rgba (float width) (float height) 0 :rgba :unsigned-byte raw-pnt)
-    (setf (raw-pnt this) raw-pnt)
-    (setf (width this) (float width))
-    (setf (height this) (float height))
+    (gl:tex-image-2d :texture-2d 0 :rgba (float (width raw)) (float (height raw)) 0 :rgba :unsigned-byte (bytes raw))
+    (setf (raw-pnt this) (bytes raw))
+    (setf (width this) (float (width raw)))
+    (setf (height this) (float (height raw)))
     (push this *raw-buffers*)
     this))
 
@@ -305,7 +320,7 @@
         (image (alexandria:read-file-into-byte-vector path)))
       (loop for i from 0 to (1- (length image)) do
             (setf (cffi:mem-aref texture '%gl:ubyte i) (aref image i)))
-      texture))
+      (make-instance 'raw :bytes texture :width width :height height)))
 
 ;; Create hash-table to store key state.
 (defun create-key-state-table (keys)
