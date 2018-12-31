@@ -662,20 +662,32 @@
     (unset-draw-param w r g b a aa)))
 
 ;; Draw image.
-(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0) (rt 0.0) (r 1.0) (g 1.0) (b 1.0))
+(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0) (rt 0.0) (r 1.0) (g 1.0) (b 1.0) (z nil) (at nil))
   (render-2d
     (gl:matrix-mode :modelview)
     (gl:push-matrix)
     (gl:load-identity)
-    (gl:translate x y 0.0)
+    ; z-buffer support (experimental).
+    (gl:translate x y (if z z 0.0))
     (gl:rotate rt 0.0 0.0 1.0)
     (gl:scale sx sy 0.0)
     
     (gl:bind-texture :texture-2d (id texture))
     (gl:enable :texture-2d)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+
+    ; alpha-test support (experimental).
+    (when at
+      (sik:enable :alpha-test)
+      (gl:alpha-func :gequal at))
+    
     (when a 
       (gl:enable :blend)
       (gl:blend-func :src-alpha :one-minus-src-alpha))
+
     (gl:color r g b (if a a 1.0))
     
     (let ((hw (/ (width texture) 2.0))
@@ -689,9 +701,18 @@
       (gl:vertex (+ hw) (+ hh) 0)
       (gl:tex-coord 0 1)
       (gl:vertex (- hw) (+ hh) 0)))  
-    
+
     (when a
       (gl:disable :blend))
+
+    ; alpha-test support (experimental).
+    (when at
+      (sik:disable :alpha-test))
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+
     (gl:disable :texture-2d)
     
     (gl:pop-matrix)))
