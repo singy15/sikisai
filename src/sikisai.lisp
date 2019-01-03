@@ -406,10 +406,12 @@
 
 ;; Mouse.
 (defmethod glut:mouse ((this window) button state x y)
-  (setf (mouse-left-down this) (and (equal button :LEFT-BUTTON) (equal state :DOWN)))
-  (setf (mouse-left-push this) (and (equal button :LEFT-BUTTON) (equal state :DOWN)))
-  (setf (mouse-right-down this) (and (equal button :RIGHT-BUTTON) (equal state :DOWN)))
-  (setf (mouse-right-push this) (and (equal button :RIGHT-BUTTON) (equal state :DOWN))))
+  (when (equal button :LEFT-BUTTON)
+    (setf (mouse-left-down this) (equal state :DOWN))
+    (setf (mouse-left-push this) (equal state :DOWN)))
+  (when (equal button :RIGHT-BUTTON)
+    (setf (mouse-right-down this) (equal state :DOWN))
+    (setf (mouse-right-push this) (equal state :DOWN)) ))
 
 ;; Mouse wheel.
 (if (fboundp 'glut:mouse-wheel-func)
