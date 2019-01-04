@@ -614,13 +614,23 @@
     (unset-draw-param nil r g b a aa)))
 
 ;; Draw line.
-(defun line (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun line (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
   (render-2d
     (set-draw-param w r g b a aa)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
     (gl:begin :lines)
-    (gl:vertex x y 0.0)
-    (gl:vertex x2 y2 0.0)
+    (gl:vertex x y (if z z 0.0))
+    (gl:vertex x2 y2 (if z z 0.0))
     (gl:end)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+    
     (unset-draw-param w r g b a aa)))
 
 ;; Draw rect.
