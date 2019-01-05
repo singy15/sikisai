@@ -646,8 +646,13 @@
     (unset-draw-param w r g b a aa)))
 
 ;; Draw circle.
-(defun circle (x y radius n-div &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (f nil))
+(defun circle (x y radius n-div &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (f nil) (z nil))
   (render-2d
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
     (let* ((n n-div)
            (ptheta (/ (* 2.0 PI) n)))
        (if f
@@ -656,21 +661,35 @@
                  (push (list (+ x (* radius (cos (* i ptheta))))
                              (+ y (* radius (sin (* i ptheta)))))
                        pnts))
-           (sik:poly pnts :w w :r r :g g :b b :a a :aa aa))
+           (sik:poly pnts :w w :r r :g g :b b :a a :aa aa :z (if z z 0.0)))
          (loop for i from 0 below n do
              (sik:line (+ x (* radius (cos (* i ptheta))))
                        (+ y (* radius (sin (* i ptheta))))
                        (+ x (* radius (cos (* (+ i 1) ptheta))))
                        (+ y (* radius (sin (* (+ i 1) ptheta))))
-                       :w w :aa aa :r r :g g :b b :a a))))))
+                       :w w :aa aa :r r :g g :b b :a a :z (if z z 0.0)))))
+    
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))))
 
 ;; Draw polygon.
-(defun poly (pnts &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun poly (pnts &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
   (render-2d 
     (set-draw-param w r g b a aa)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
     (gl:begin :polygon)
-    (mapc (lambda (p) (gl:vertex (car p) (cadr p) 0.0)) pnts)
+    (mapc (lambda (p) (gl:vertex (car p) (cadr p) (if z z 0.0))) pnts)
     (gl:end)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+
     (unset-draw-param w r g b a aa)))
 
 ;; Draw image.
