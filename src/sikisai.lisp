@@ -604,13 +604,23 @@
   (sik:look-at cam-x cam-y cam-z at-x at-y at-z axis-x axis-y axis-z))
 
 ;; Draw point.
-(defun point (x y &key (s 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun point (x y &key (s 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
   (render-2d
     (set-draw-param nil r g b a aa)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
     (gl:point-size s)
     (gl:begin :points)
-    (gl:vertex x y 0.0)
+    (gl:vertex x y (if z z 0.0))
     (gl:end)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+
     (unset-draw-param nil r g b a aa)))
 
 ;; Draw line.
@@ -634,15 +644,25 @@
     (unset-draw-param w r g b a aa)))
 
 ;; Draw rect.
-(defun rect (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun rect (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
   (render-2d
     (set-draw-param w r g b a aa)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
     (gl:begin :polygon)
-    (gl:vertex x y 0.0)
-    (gl:vertex x2 y 0.0)
-    (gl:vertex x2 y2 0.0)
-    (gl:vertex x y2 0.0)
+    (gl:vertex x y (if z z 0.0))
+    (gl:vertex x2 y (if z z 0.0))
+    (gl:vertex x2 y2 (if z z 0.0))
+    (gl:vertex x y2 (if z z 0.0))
     (gl:end)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+    
     (unset-draw-param w r g b a aa)))
 
 ;; Draw circle.
@@ -749,26 +769,46 @@
     (gl:pop-matrix)))
 
 ;; Draw string with bitmap character.
-(defun textb (str x y &key (r 1.0) (g 1.0) (b 1.0) (a nil) (font +bitmap-8-by-13+))
+(defun textb (str x y &key (r 1.0) (g 1.0) (b 1.0) (a nil) (font +bitmap-8-by-13+) (z nil))
   (render-2d 
     (set-draw-param nil r g b a nil)
-    (gl:raster-pos x y)
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:enable :depth-test))
+    
+    (gl:raster-pos x y (if z z 0.0))
     (loop for i from 0 below (length str) do
           (glut:bitmap-character font (char-code (aref str i))))
+
+    ; z-buffer support (experimental).
+    (when z
+      (gl:disable :depth-test))
+    
     (unset-draw-param nil r g b a nil)))
 
 ;; Draw string with stroke character.
-(defun texts (str x y &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (s 1.0) (sx 1.0) (sy 1.0) (rt 0.0) (font +stroke-mono-roman+))
+(defun texts (str x y &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (s 1.0) (sx 1.0) (sy 1.0) (rt 0.0) (font +stroke-mono-roman+) (z nil))
   (render-2d
-    (multiple-value-bind (x y z) (glu:un-project x (- (glut:width *window*) y) 0.0)
+    (multiple-value-bind (x y fz) (glu:un-project x (- (glut:width *window*) y) 0.0)
       (gl:push-matrix)
       (set-draw-param w r g b a aa)
-      (gl:translate x y z)
+
+      ; z-buffer support (experimental).
+      (when z
+        (gl:enable :depth-test))
+      
+      (gl:translate x y (if z z 0.0))
       (gl:scale (* s 0.1) (* s -0.1) 0.0)
       (gl:scale sx sy 1.0)
       (gl:rotate rt 0.0 0.0 -1.0)
       (loop for i from 0 below (length str) do
             (glut:stroke-character font (char-code (aref str i))))
+
+      ; z-buffer support (experimental).
+      (when z
+        (gl:disable :depth-test))
+      
       (unset-draw-param w r g b a aa)
       (gl:pop-matrix))))
 
