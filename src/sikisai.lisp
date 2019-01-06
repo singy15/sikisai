@@ -661,13 +661,13 @@
                  (push (list (+ x (* radius (cos (* i ptheta))))
                              (+ y (* radius (sin (* i ptheta)))))
                        pnts))
-           (sik:poly pnts :w w :r r :g g :b b :a a :aa aa :z (if z z 0.0)))
+           (sik:poly pnts :w w :r r :g g :b b :a a :aa aa :z z))
          (loop for i from 0 below n do
              (sik:line (+ x (* radius (cos (* i ptheta))))
                        (+ y (* radius (sin (* i ptheta))))
                        (+ x (* radius (cos (* (+ i 1) ptheta))))
                        (+ y (* radius (sin (* (+ i 1) ptheta))))
-                       :w w :aa aa :r r :g g :b b :a a :z (if z z 0.0)))))
+                       :w w :aa aa :r r :g g :b b :a a :z z))))
     
     ; z-buffer support (experimental).
     (when z
