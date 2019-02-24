@@ -713,7 +713,7 @@
     (unset-draw-param w r g b a aa)))
 
 ;; Draw image.
-(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0) (rt 0.0) (r 1.0) (g 1.0) (b 1.0) (z nil) (at nil))
+(defun image (texture x y &key (a nil) (sx 1.0) (sy 1.0) (rt 0.0) (r 1.0) (g 1.0) (b 1.0) (z nil) (at nil) (manual-blend nil))
   (render-2d
     (gl:matrix-mode :modelview)
     (gl:push-matrix)
@@ -735,7 +735,7 @@
       (sik:enable :alpha-test)
       (gl:alpha-func :gequal at))
     
-    (when a 
+    (when (and a (not manual-blend)) 
       (gl:enable :blend)
       (gl:blend-func :src-alpha :one-minus-src-alpha))
 
@@ -753,7 +753,7 @@
       (gl:tex-coord 0 1)
       (gl:vertex (- hw) (+ hh) 0)))  
 
-    (when a
+    (when (and a (not manual-blend))
       (gl:disable :blend))
 
     ; alpha-test support (experimental).
