@@ -47,6 +47,15 @@
     :width
     :height
     :id
+    :context
+    :r
+    :g
+    :b
+    :f
+    :w
+    :a
+    :aa
+    :manual-blend
     :window
     :user-initialize
     :user-idle
@@ -185,6 +194,41 @@
    (id
      :accessor id
      :initarg :id)))
+
+;; Draw context.
+(defclass context ()
+  ((r
+     :accessor r
+     :initarg :r
+     :initform 1.0)
+   (g
+     :accessor g
+     :initarg :g
+     :initform 1.0)
+   (b
+     :accessor b
+     :initarg :b
+     :initform 1.0)
+   (f
+     :accessor f
+     :initarg :f
+     :initform nil)
+   (w
+     :accessor w
+     :initarg :w
+     :initform 1.0)
+   (a
+     :accessor a
+     :initarg :a
+     :initform 1.0)
+   (aa
+     :accessor aa
+     :initarg :aa
+     :initform t)
+   (manual-blend
+     :accessor manual-blend
+     :initarg :manual-blend
+     :initform nil)))
 
 ;; Ctor texture.
 (defmethod initialize-instance :around ((this texture) &key (path nil) (width nil) (height nil) (intrpl :linear) (src nil))
