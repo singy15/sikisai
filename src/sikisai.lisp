@@ -51,11 +51,9 @@
     :r
     :g
     :b
-    :f
     :w
     :a
     :aa
-    :manual-blend
     :window
     :user-initialize
     :user-idle
@@ -140,6 +138,7 @@
 ;; Variables.
 (defparameter *window* nil)
 (defparameter *raw-buffers* (list))
+(defparameter *last-context* nil)
 
 ;; Rendering in 2D.
 (defmacro render-2d (&rest body)
@@ -209,10 +208,6 @@
      :accessor b
      :initarg :b
      :initform 1.0)
-   (f
-     :accessor f
-     :initarg :f
-     :initform nil)
    (w
      :accessor w
      :initarg :w
@@ -224,11 +219,7 @@
    (aa
      :accessor aa
      :initarg :aa
-     :initform t)
-   (manual-blend
-     :accessor manual-blend
-     :initarg :manual-blend
-     :initform nil)))
+     :initform t)))
 
 ;; Ctor texture.
 (defmethod initialize-instance :around ((this texture) &key (path nil) (width nil) (height nil) (intrpl :linear) (src nil))
@@ -577,8 +568,10 @@
   (gl:matrix-mode :projection)
   (gl:pop-matrix))
 
+;; TODO: experimental
 ;; Set draw parameter.
 (defun set-draw-param (w r g b a aa)
+  (setf *last-context* nil)
   (if a 
     (progn
       (gl:blend-func :src-alpha :one-minus-src-alpha)
@@ -602,6 +595,36 @@
     (gl:line-width 1.0))
   (gl:material :front-and-back :diffuse (vector r g b (if a a 1.0)))
   (gl:color r g b (if a a 1.0)))
+
+;; TODO: experimental
+;; Set draw parameter by context.
+(defun set-draw-param-by-context (ctx)
+  (when (and *last-context* (eql ctx *last-context*)) 
+    (return-from set-draw-param-by-context nil))
+  (setf *last-context* ctx)
+  (if (a ctx) 
+    (progn
+      (gl:blend-func :src-alpha :one-minus-src-alpha)
+      (gl:enable :blend))
+    (progn
+      (gl:disable :blend)))
+  (if (aa ctx)
+    (progn
+      (gl:hint :point-smooth-hint :fastest)
+      (gl:hint :line-smooth-hint :fastest)
+      (gl:hint :polygon-smooth-hint :fastest)
+      (gl:enable :point-smooth)
+      (gl:enable :line-smooth)
+      (gl:enable :polygon-smooth))
+    (progn
+      (gl:disable :point-smooth)
+      (gl:disable :line-smooth)
+      (gl:disable :polygon-smooth)))
+  (if (w ctx)
+    (gl:line-width (w ctx))
+    (gl:line-width 1.0))
+  (gl:material :front-and-back :diffuse (vector (r ctx) (g ctx) (b ctx) (if (a ctx) (a ctx) 1.0)))
+  (gl:color (r ctx) (g ctx) (b ctx) (if (a ctx) (a ctx) 1.0)))
 
 ;; Clear draw parameter.
 (defun unset-draw-param (w r g b a aa)
@@ -668,9 +691,12 @@
     (unset-draw-param nil r g b a aa)))
 
 ;; Draw line.
-(defun line (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
+(defun line (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil) (ctx nil))
   (render-2d
-    (set-draw-param w r g b a aa)
+    ;; TODO: experimental
+    (if ctx 
+        (set-draw-param-by-context ctx)
+        (set-draw-param w r g b a aa))
 
     ; z-buffer support (experimental).
     (when z
