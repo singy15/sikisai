@@ -60,6 +60,11 @@
     :user-display
     :user-finalize
     :user-mouse-wheel
+    :user-mouse
+    :user-keyboard
+    :user-passive-motion
+    :user-motion
+    :user-keyboard-up
     :current
     :get-width
     :get-height
@@ -77,6 +82,7 @@
     :norm
     :set-camera
     :clear
+    :draw
     :point
     :line
     :rect
@@ -316,7 +322,11 @@
      :initform 0.0)
    (axis-z 
      :accessor axis-z
-     :initform 0.0))
+     :initform 0.0)
+   (realtime
+     :accessor realtime
+     :initform t
+     :initarg :realtime))
   (:default-initargs 
     :title "sikisai"
     :mode '(:double :rgb :depth)
@@ -336,6 +346,11 @@
 (defmethod user-display ((this window)) nil)
 (defmethod user-finalize ((this window)) nil)
 (defmethod user-mouse-wheel ((this window) direction) nil)
+(defmethod user-mouse ((this window)) nil)
+(defmethod user-keyboard ((this window)) nil)
+(defmethod user-passive-motion ((this window)) nil)
+(defmethod user-motion ((this window)) nil)
+(defmethod user-keyboard-up ((this window)) nil)
 
 ;; Get current window.
 (defun current ()
@@ -446,7 +461,9 @@
     (setf (mouse-left-push this) (equal state :DOWN)))
   (when (equal button :RIGHT-BUTTON)
     (setf (mouse-right-down this) (equal state :DOWN))
-    (setf (mouse-right-push this) (equal state :DOWN)) ))
+    (setf (mouse-right-push this) (equal state :DOWN)))
+  
+  (user-mouse this))
 
 ;; Mouse wheel.
 (if (fboundp 'glut:mouse-wheel-func)
@@ -456,18 +473,23 @@
 ;; Mouse passive motion.
 (defmethod glut:passive-motion ((this window) x y)
   (setf (mouse-x this) x)
-  (setf (mouse-y this) y))
+  (setf (mouse-y this) y)
+  
+  (user-passive-motion this))
 
 ;; Mouse motion.
 (defmethod glut:motion ((this window) x y)
   (setf (mouse-x this) x)
-  (setf (mouse-y this) y))
+  (setf (mouse-y this) y)
+  
+  (user-motion this))
 
 ;; Key pressed.
 (defmethod glut:keyboard ((this window) key x y)
   ;; Exit on esc pressed.
-  (if (equal key #\Esc)
-    (glut:destroy-current-window))
+  (when (equal key #\Esc)
+    (glut:destroy-current-window)
+    (return-from glut:keyboard))
 
   ;; Set key state.
   (mapc
@@ -475,7 +497,9 @@
       (when (equal x key)
         (setf (gethash x (keys-down this)) t)
         (setf (gethash x (keys-push this)) t)))
-    (keys this)))
+    (keys this))
+  
+  (user-keyboard this))
 
 ;; Key released.
 (defmethod glut:keyboard-up ((this window) key x y )
@@ -483,7 +507,9 @@
     (lambda (x)
       (if (equal x key)
         (setf (gethash x (keys-down this)) nil)))
-    (keys this)))
+    (keys this))
+  
+  (user-keyboard-up this))
 
 ;; Reshape.
 (defmethod glut:reshape ((this window) width height)
@@ -498,19 +524,24 @@
   (gl:depth-func :less)
   (gl:light-model :light-model-local-viewer 1))
 
-;; Draw.
-(defmethod glut:display ((this window))
-  (gl:shade-model :flat)
-  (gl:normal 0 0 1)
-  (set-mouse-push-state this)
-  (set-key-push-state this)
-  (fps-control this #'user-display)
-
-  (debug-3d-feature)
-
+(defmethod flush ((this window))
   (if (double-buffer-enabled this) 
     (glut:swap-buffers)
-    (gl:flush)))
+    (gl:flush)) )
+
+(defmethod draw ((this window))
+  (gl:clear :depth-buffer)
+  (if (realtime this)
+    (fps-control this #'user-display)
+    (user-display this))
+  (flush this))
+
+;; Draw.
+(defmethod glut:display ((this window))
+  (set-mouse-push-state this)
+  (set-key-push-state this)
+  (when (realtime this)
+    (draw this)))
 
 ;; Idle.
 (defmethod glut:idle ((this window))
@@ -983,17 +1014,6 @@
     (loop for i from 0 below (length str) do
           (glut:stroke-character font (char-code (aref str i))))
     (unset-draw-param w r g b a aa)))
-
-;; Draw.
-(defmethod glut:display ((this window))
-  (set-mouse-push-state this)
-  (set-key-push-state this)
-  (gl:clear :depth-buffer)
-  (fps-control this #'user-display)
-
-  (if (double-buffer-enabled this) 
-    (glut:swap-buffers)
-    (gl:flush)))
 
 (defclass dxfline () 
   ((code
