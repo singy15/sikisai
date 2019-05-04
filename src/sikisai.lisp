@@ -2,8 +2,8 @@
 ;; Package sik.
 (defpackage sik
   (:use :cl :cl-user)
-  (:import-from 
-    gl 
+  (:import-from
+    gl
     translate
     rotate
     scale
@@ -16,10 +16,10 @@
     material
     enable
     disable)
-  (:import-from 
+  (:import-from
     glu
     look-at)
-  (:import-from 
+  (:import-from
     glut
     solid-cube
     solid-sphere
@@ -168,7 +168,7 @@
      (gl:pop-matrix)))
 
 ; raw class.
-(defclass raw () 
+(defclass raw ()
   ((width
      :accessor width
      :initarg :width)
@@ -181,7 +181,7 @@
      :initform nil)))
 
 ;; texture class.
-(defclass texture () 
+(defclass texture ()
   ((width
      :accessor width
      :initarg :width)
@@ -239,8 +239,8 @@
     this))
 
 ;; window class.
-(defclass window (glut:window) 
-  ((tm-frame 
+(defclass window (glut:window)
+  ((tm-frame
      :accessor tm-frame
      :initform 0)
    (tm-next-frame
@@ -290,34 +290,34 @@
    (double-buffer-enabled
      :accessor double-buffer-enabled
      :initform nil)
-   (cam-x 
+   (cam-x
      :accessor cam-x
      :initform 0.0)
-   (cam-y 
+   (cam-y
      :accessor cam-y
      :initform 0.0)
-   (cam-z 
+   (cam-z
      :accessor cam-z
      :initform 0.0)
-   (at-x 
+   (at-x
      :accessor at-x
      :initform 0.0)
-   (at-y 
+   (at-y
      :accessor at-y
      :initform 0.0)
-   (at-z 
+   (at-z
      :accessor at-z
      :initform 0.0)
-   (axis-x 
+   (axis-x
      :accessor axis-x
      :initform 0.0)
-   (axis-y 
+   (axis-y
      :accessor axis-y
      :initform 0.0)
-   (axis-z 
+   (axis-z
      :accessor axis-z
      :initform 0.0))
-  (:default-initargs 
+  (:default-initargs
     :title "sikisai"
     :mode '(:double :rgb :depth)
     :width 400
@@ -494,7 +494,7 @@
   (gl:matrix-mode :projection)
   (gl:load-identity)
   (glu:perspective 45.0 (/ (get-width) (get-height)) 1.0 100.0)
-  
+
   (gl:depth-func :less)
   (gl:light-model :light-model-local-viewer 1))
 
@@ -508,7 +508,7 @@
 
   (debug-3d-feature)
 
-  (if (double-buffer-enabled this) 
+  (if (double-buffer-enabled this)
     (glut:swap-buffers)
     (gl:flush)))
 
@@ -535,18 +535,18 @@
 
 ;; Set rendering mode.
 (defun set-render-mode (mode)
-  (cond ((equal mode :3d) 
-         (gl:enable ; :light0 
-                    :lighting 
-                    ; :cull-face 
+  (cond ((equal mode :3d)
+         (gl:enable ; :light0
+                    :lighting
+                    ; :cull-face
                     :depth-test))
-        ((equal mode :2d) 
-         (gl:disable ; :light0 
-                     :lighting 
-                     ; :cull-face 
+        ((equal mode :2d)
+         (gl:disable ; :light0
+                     :lighting
+                     ; :cull-face
                      :depth-test))
         (t (error "No such rendering mode"))))
- 
+
 ;; Start 2D mode.
 (defun begin-2d ()
   (gl:matrix-mode :projection)
@@ -557,14 +557,14 @@
 
   (gl:matrix-mode :modelview)
   (gl:push-matrix)
-  
+
   (set-render-mode :2d))
 
 ;; End 2D mode.
 (defun end-2d ()
   (gl:matrix-mode :modelview)
   (gl:pop-matrix)
-  
+
   (gl:matrix-mode :projection)
   (gl:pop-matrix))
 
@@ -572,7 +572,7 @@
 ;; Set draw parameter.
 (defun set-draw-param (w r g b a aa)
   (setf *last-context* nil)
-  (if a 
+  (if a
     (progn
       (gl:blend-func :src-alpha :one-minus-src-alpha)
       (gl:enable :blend))
@@ -599,10 +599,10 @@
 ;; TODO: experimental
 ;; Set draw parameter by context.
 (defun set-draw-param-by-context (ctx)
-  (when (and *last-context* (eql ctx *last-context*)) 
+  (when (and *last-context* (eql ctx *last-context*))
     (return-from set-draw-param-by-context nil))
   (setf *last-context* ctx)
-  (if (a ctx) 
+  (if (a ctx)
     (progn
       (gl:blend-func :src-alpha :one-minus-src-alpha)
       (gl:enable :blend))
@@ -628,7 +628,7 @@
 
 ;; Clear draw parameter.
 (defun unset-draw-param (w r g b a aa)
-  (when a 
+  (when a
     (gl:disable :blend))
   (when aa
     (gl:disable :point-smooth)
@@ -678,7 +678,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (gl:point-size s)
     (gl:begin :points)
     (gl:vertex x y (if z z 0.0))
@@ -694,14 +694,14 @@
 (defun line (x y x2 y2 &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil) (ctx nil))
   (render-2d
     ;; TODO: experimental
-    (if ctx 
+    (if ctx
         (set-draw-param-by-context ctx)
         (set-draw-param w r g b a aa))
 
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (gl:begin :lines)
     (gl:vertex x y (if z z 0.0))
     (gl:vertex x2 y2 (if z z 0.0))
@@ -710,7 +710,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:disable :depth-test))
-    
+
     (unset-draw-param w r g b a aa)))
 
 ;; Draw rect.
@@ -721,7 +721,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (gl:begin :polygon)
     (gl:vertex x y (if z z 0.0))
     (gl:vertex x2 y (if z z 0.0))
@@ -732,7 +732,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:disable :depth-test))
-    
+
     (unset-draw-param w r g b a aa)))
 
 ;; Draw circle.
@@ -742,7 +742,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (let* ((n n-div)
            (ptheta (/ (* 2.0 PI) n)))
        (if f
@@ -758,20 +758,20 @@
                        (+ x (* radius (cos (* (+ i 1) ptheta))))
                        (+ y (* radius (sin (* (+ i 1) ptheta))))
                        :w w :aa aa :r r :g g :b b :a a :z z))))
-    
+
     ; z-buffer support (experimental).
     (when z
       (gl:disable :depth-test))))
 
 ;; Draw polygon.
 (defun poly (pnts &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (z nil))
-  (render-2d 
+  (render-2d
     (set-draw-param w r g b a aa)
 
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (gl:begin :polygon)
     (mapc (lambda (p) (gl:vertex (car p) (cadr p) (if z z 0.0))) pnts)
     (gl:end)
@@ -792,7 +792,7 @@
     (gl:translate x y (if z z 0.0))
     (gl:rotate rt 0.0 0.0 1.0)
     (gl:scale sx sy 0.0)
-    
+
     (gl:bind-texture :texture-2d (id texture))
     (gl:enable :texture-2d)
 
@@ -804,15 +804,15 @@
     (when at
       (sik:enable :alpha-test)
       (gl:alpha-func :gequal at))
-    
-    (when (and a (not manual-blend)) 
+
+    (when (and a (not manual-blend))
       (gl:enable :blend)
       (gl:blend-func :src-alpha :one-minus-src-alpha))
 
     (gl:color r g b (if a a 1.0))
-    
+
     (let ((hw (/ (width texture) 2.0))
-          (hh (/ (height texture) 2.0))) 
+          (hh (/ (height texture) 2.0)))
       (gl:with-primitive :quads
       (gl:tex-coord 0 0)
       (gl:vertex (- hw) (- hh) 0)
@@ -821,7 +821,7 @@
       (gl:tex-coord 1 1)
       (gl:vertex (+ hw) (+ hh) 0)
       (gl:tex-coord 0 1)
-      (gl:vertex (- hw) (+ hh) 0)))  
+      (gl:vertex (- hw) (+ hh) 0)))
 
     (when (and a (not manual-blend))
       (gl:disable :blend))
@@ -835,18 +835,18 @@
       (gl:disable :depth-test))
 
     (gl:disable :texture-2d)
-    
+
     (gl:pop-matrix)))
 
 ;; Draw string with bitmap character.
 (defun textb (str x y &key (r 1.0) (g 1.0) (b 1.0) (a nil) (font +bitmap-8-by-13+) (z nil))
-  (render-2d 
+  (render-2d
     (set-draw-param nil r g b a nil)
 
     ; z-buffer support (experimental).
     (when z
       (gl:enable :depth-test))
-    
+
     (gl:raster-pos x y (if z z 0.0))
     (loop for i from 0 below (length str) do
           (glut:bitmap-character font (char-code (aref str i))))
@@ -854,7 +854,7 @@
     ; z-buffer support (experimental).
     (when z
       (gl:disable :depth-test))
-    
+
     (unset-draw-param nil r g b a nil)))
 
 ;; Draw string with stroke character.
@@ -867,7 +867,7 @@
       ; z-buffer support (experimental).
       (when z
         (gl:enable :depth-test))
-      
+
       (gl:translate x y (if z z 0.0))
       (gl:scale (* s 0.1) (* s -0.1) 0.0)
       (gl:scale sx sy 1.0)
@@ -878,17 +878,30 @@
       ; z-buffer support (experimental).
       (when z
         (gl:disable :depth-test))
-      
+
       (unset-draw-param w r g b a aa)
       (gl:pop-matrix))))
 
 ;; Draw point.
-(defun point3 (x y z &key (s 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
+(defun point3 (x y z &key (s 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t) (texture nil) (at nil))
   (set-draw-param nil r g b a aa)
+  (when texture
+    (gl:tex-env :point-sprite :coord-replace t)
+    (gl:bind-texture :texture-2d (id texture))
+    (gl:enable :texture-2d)
+    (gl:enable :point-sprite)
+    (when at
+      (gl:alpha-func :greater at)
+      (gl:enable :alpha-test)))
   (gl:point-size s)
   (gl:begin :points)
   (gl:vertex x y z)
   (gl:end)
+  (when texture
+    (gl:disable :point-sprite)
+    (gl:disable :texture-2d)
+    (when at
+      (gl:disable :alpha-test)))
   (unset-draw-param nil r g b a aa))
 
 ;; Draw line.
@@ -991,11 +1004,11 @@
   (gl:clear :depth-buffer)
   (fps-control this #'user-display)
 
-  (if (double-buffer-enabled this) 
+  (if (double-buffer-enabled this)
     (glut:swap-buffers)
     (gl:flush)))
 
-(defclass dxfline () 
+(defclass dxfline ()
   ((code
      :accessor code)
    (typ
@@ -1027,7 +1040,7 @@
     ;; Read code.
     (unless (setf str (read-line fp nil)) (return-from dxf-read-line nil))
     (setf (code dr) (parse-integer str))
-    
+
     ;; Read data.
     (setf (typ dr) (dxf-get-type (code dr)))
     (unless (setf str (read-line fp nil)) (return-from dxf-read-line nil))
@@ -1045,8 +1058,8 @@
 
       ((equal :type-flt (typ dr))
        (setf (data dr) (read-from-string (trim str))))
-      
-      (t 
+
+      (t
         (error "dxf-read-line : unknown type")))
     (return-from dxf-read-line t)))
 
@@ -1073,17 +1086,17 @@
   (if (equal :face *drawmode*)
     (gl:begin :polygon)
     (gl:begin :lines))
-  
+
   ;; Set normal.
-  (let (ls (list)) 
+  (let (ls (list))
     (loop for i from 0 below 4 do
           (let ((codnum 0))
              (loop for j from 0 below 4 do
-                   (if (aref *vread* i j) 
+                   (if (aref *vread* i j)
                        (incf codnum)))
-             (if (equal codnum 3) 
-               (setf ls (append ls (list (list (aref *vertex* i 0) 
-                                               (aref *vertex* i 1) 
+             (if (equal codnum 3)
+               (setf ls (append ls (list (list (aref *vertex* i 0)
+                                               (aref *vertex* i 1)
                                                (aref *vertex* i 2))))))))
     (if (>= (length ls) 3)
       ; (let ((nx 0.0)
@@ -1099,12 +1112,12 @@
       (multiple-value-bind (x y z) (norm (car ls) (cadr ls) (caddr ls))
         (let ((nrm (sqrt (+ (* x x) (* y y) (* z z)))))
           (gl:normal (/ x nrm) (/ y nrm) (/ z nrm))))))
-  
+
   ;; Draw face.
   (loop for i from 0 below 4 do
         (let ((codnum 0))
              (loop for j from 0 below 4 do
-                   (if (aref *vread* i j) 
+                   (if (aref *vread* i j)
                        (incf codnum)))
              (dxf-vertex codnum (vector (aref *vertex* i 0)
                                         (aref *vertex* i 1)
@@ -1119,7 +1132,7 @@
   ; (loop for i from 3 downto 0 do
   ;       (let ((codnum 0))
   ;            (loop for j from 0 below 4 do
-  ;                  (if (aref *vread* i j) 
+  ;                  (if (aref *vread* i j)
   ;                      (incf codnum)))
   ;            (dxf-vertex codnum (vector (aref *vertex* i 0)
   ;                                       (aref *vertex* i 1)
@@ -1137,7 +1150,7 @@
           (if (equal :type-str (typ dr))
             (progn
               (dxf-draw)
-              (cond ((equal 0 (code dr)) 
+              (cond ((equal 0 (code dr))
                      (cond ((equal "ENDSEC" (data dr)) (return-from dxf-read-entities t))
                            ((equal "3DFACE" (data dr)) (setf *drawmode* :face))
                            ((equal "3DLINE" (data dr)) (setf *drawmode* :line))))))
@@ -1158,23 +1171,23 @@
             (return)))
     (loop while (dxf-read-line dr fp) do
           (if (equal :type-str (typ dr))
-            (cond ((equal "ENDSEC" (data dr)) 
+            (cond ((equal "ENDSEC" (data dr))
                    (return-from dxf-read-section t))
-                  ((equal "TABLE" (data dr)) 
+                  ((equal "TABLE" (data dr))
                    (return-from dxf-read-section (dxf-read-table fp)))
-                  ((equal "ENTITIES" (data dr)) 
+                  ((equal "ENTITIES" (data dr))
                    (return-from dxf-read-section (dxf-read-entities fp))))))))
 
 (defun dxf-read-file (fp)
-  (let ((ls (gl:gen-lists 1))) 
+  (let ((ls (gl:gen-lists 1)))
     (dxf-clear)
     (gl:new-list ls :compile)
     (loop while (dxf-read-section fp))
     (gl:end-list)
-    ls)) 
+    ls))
 
-(defun load-dxf (path) 
-  (with-open-file (fp path :direction :input) 
+(defun load-dxf (path)
+  (with-open-file (fp path :direction :input)
     (dxf-read-file fp)))
 
 (defun model3 (ls &key (w 1.0) (r 1.0) (g 1.0) (b 1.0) (a nil) (aa t))
@@ -1194,19 +1207,19 @@
       (when at
         (sik:enable :alpha-test)
         (gl:alpha-func :greater at))
-      
+
       ; Alternative for alpha test.
       ; (gl:depth-mask nil)
-      
+
       (gl:bind-texture :texture-2d (id texture))
       (gl:enable :texture-2d)
-      (when a 
+      (when a
         (gl:enable :blend)
         (gl:blend-func :src-alpha :one-minus-src-alpha))
       (gl:color r g b (if a a 1.0))
-      
+
       (let ((hw (/ (width texture) 2.0))
-            (hh (/ (height texture) 2.0))) 
+            (hh (/ (height texture) 2.0)))
         (gl:with-primitive :quads
         (gl:tex-coord 0 0)
         (gl:vertex (- hw) (+ hh) 0)
@@ -1215,8 +1228,8 @@
         (gl:tex-coord 1 1)
         (gl:vertex (+ hw) (- hh) 0)
         (gl:tex-coord 0 1)
-        (gl:vertex (- hw) (- hh) 0)))  
-      
+        (gl:vertex (- hw) (- hh) 0)))
+
       (when a
         (gl:disable :blend))
       (gl:disable :texture-2d)
