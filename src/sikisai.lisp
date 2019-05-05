@@ -97,6 +97,7 @@
     :load-dxf
     :model3
     :image3
+    :project
 
     ;; Imported symbols.
     :look-at
@@ -1243,6 +1244,18 @@
       (sik:enable :lighting)
       )
     ))
+
+; Project
+(defun project (vx vy vz)
+  (let (x y z)
+    (sik:local
+      (multiple-value-bind
+        (px py pz)
+        (glu:project vx vy vz)
+        (setf x px)
+        (setf y py)
+        (setf z pz)))
+    (values x (+ (- (/ (sik:get-height) 2.0) y) (/ (sik:get-height) 2.0)) z)))
 
 (in-package :cl-user)
 
