@@ -41,6 +41,8 @@
     :+bitmap-helvetica-18+
     :+stroke-roman+
     :+stroke-mono-roman+
+    :render-2d
+    :render-3d
     :local
     :raw
     :texture
@@ -98,6 +100,8 @@
     :model3
     :image3
     :project
+    :defdisplist
+    :displist
 
     ;; Imported symbols.
     :look-at
@@ -1179,6 +1183,7 @@
                   ((equal "ENTITIES" (data dr))
                    (return-from dxf-read-section (dxf-read-entities fp))))))))
 
+; TODO use VBO instead of display-list
 (defun dxf-read-file (fp)
   (let ((ls (gl:gen-lists 1)))
     (dxf-clear)
@@ -1256,6 +1261,23 @@
         (setf y py)
         (setf z pz)))
     (values x (+ (- (/ (sik:get-height) 2.0) y) (/ (sik:get-height) 2.0)) z)))
+
+;; Create display-list
+;; Caution: Display-list is deprecated in OpenGl 3.0
+(defmacro defdisplist (&rest body)
+  (let ((ls (gensym)))
+    `(progn 
+      (setf ,ls (gl:gen-lists 1))
+      (gl:new-list ,ls :compile)
+      ,@body
+      (gl:end-list)
+      ,ls)))
+
+; Draw display-list
+(defun displist (ls)
+  (sik:enable :cull-face)
+  (gl:call-list ls)
+  (gl:disable :cull-face))
 
 (in-package :cl-user)
 
